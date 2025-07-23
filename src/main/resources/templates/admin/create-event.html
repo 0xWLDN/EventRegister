@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Create Event</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    let questionCount = 0;
+
+    function addQuestion() {
+        const container = document.getElementById('questions');
+        const div = document.createElement('div');
+        div.classList.add('border', 'p-3', 'mb-3', 'rounded');
+        div.innerHTML = `
+            <div class="mb-3">
+              <label class="form-label">Question:</label>
+              <input type="text" name="questions[${questionCount}].question" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Type:</label>
+              <select class="form-select" name="questions[${questionCount}].type" onchange="toggleOptions(this, ${questionCount})">
+                <option value="TEXT">Standard Question</option>
+                <option value="MCQ">Multiple Choice Question</option>
+              </select>
+            </div>
+            <div class="mb-3" id="options-${questionCount}" style="display:none">
+              <label class="form-label">Choices:</label>
+              <div id="choice-container-${questionCount}">
+                <!-- Choice inputs will be added here -->
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addChoice(${questionCount})">+ Add Choice</button>
+            </div>
+            <input type="hidden" name="questions[${questionCount}].id" value="q${questionCount}" />
+        `;
+        container.appendChild(div);
+        questionCount++;
+    }
+
+    function toggleOptions(select, index) {
+        const optionsDiv = document.getElementById('options-' + index);
+        if (select.value === 'MCQ') {
+            optionsDiv.style.display = 'block';
+            // If no choice inputs exist yet, add one
+            const choiceContainer = document.getElementById(`choice-container-${index}`);
+            if (choiceContainer.children.length === 0) {
+                addChoice(index);
+            }
+        } else {
+            optionsDiv.style.display = 'none';
+            // Clear choices when switching back to TEXT
+            const choiceContainer = document.getElementById(`choice-container-${index}`);
+            choiceContainer.innerHTML = '';
+        }
+    }
+
+    function addChoice(questionIndex) {
+        const choiceContainer = document.getElementById(`choice-container-${questionIndex}`);
+        const choiceCount = choiceContainer.children.length;
+        const div = document.createElement('div');
+        div.classList.add('input-group', 'mb-2');
+
+        div.innerHTML = `
+            <input type="text" name="questions[${questionIndex}].optionsRaw[]" class="form-control" placeholder="Choice ${choiceCount + 1}" required>
+            <button type="button" class="btn btn-danger" onclick="removeChoice(this)">Remove</button>
+        `;
+        choiceContainer.appendChild(div);
+    }
+
+    function removeChoice(button) {
+        const div = button.parentElement;
+        div.remove();
+    }
+
+    function convertOptions() {
+        // Remove existing hidden inputs to avoid duplication on multiple submits
+        document.querySelectorAll('input[type=hidden][name*=".options["]').forEach(el => el.remove());
+
+        // For each question's optionsRaw inputs, create hidden inputs with the right names
+        const allChoiceContainers = document.querySelectorAll('[id^="choice-container-"]');
+        allChoiceContainers.forEach(container => {
+            const questionIndex = container.id.match(/\d+/)[0];
+            const inputs = container.querySelectorAll('input[name^="questions"][name$=".optionsRaw[]"]');
+            inputs.forEach((input, i) => {
+                // Create hidden input for each choice
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = `questions[${questionIndex}].options[${i}]`;
+                hidden.value = input.value;
+                container.parentNode.appendChild(hidden);
+            });
+        });
+
+        return true;
+    }
+  </script>
+</head>
+<body>
+<div class="container mt-5">
+  <div class="card p-4 shadow-sm">
+    <h2 class="mb-4">Create Event</h2>
+    <form th:action="@{/admin/event}" method="post" onsubmit="return convertOptions()">
+      <div class="mb-3">
+        <label class="form-label">Title:</label>
+        <input type="text" name="title" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description:</label>
+        <input type="text" name="description" class="form-control" required>
+      </div>
+      <div id="questions"></div>
+      <div class="mb-3">
+        <button type="button" onclick="addQuestion()" class="btn btn-outline-primary">+ Add Question</button>
+      </div>
+      <div class="d-flex justify-content-between">
+        <button type="submit" class="btn btn-success">Save</button>
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back</a>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>
