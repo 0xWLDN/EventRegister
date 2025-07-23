@@ -20,7 +20,7 @@ pipeline {
         stage('Install Java & Maven, then Build JAR') {
             steps {
                 sh '''
-                    apk add --no-cache openjdk24 maven
+                    apk add --no-cache openjdk17 maven
                     mvn clean package -DskipTests
                 '''
             }

@@ -1,5 +1,5 @@
-# Use OpenJDK 24 as base image
-FROM openjdk:24-jdk-slim
+# Use OpenJDK 17 as base image
+FROM openjdk:17-jdk-slim
 
 
 # Set the working directory inside the container (optional but neat)
